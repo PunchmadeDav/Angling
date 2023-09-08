@@ -35,15 +35,26 @@ import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.GeoAnimatable;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animatable.instance.InstancedAnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
 import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib3.core.manager.AnimatableInstanceCache;
 
-public class SeaSlugEntity extends WaterCreatureEntity implements IAnimatable, Bucketable {
+public class SeaSlugEntity extends WaterCreatureEntity implements GeoEntity, Bucketable {
+    private static final RawAnimation AMBIENT = RawAnimation.begin().thenLoop("animation.sunfish.ambient");
+    private static final RawAnimation MOVING = RawAnimation.begin().thenLoop("animation.sunfish.moving");
 
     private static final TrackedData<SeaSlugPattern> PATTERN = DataTracker.registerData(SeaSlugEntity.class, SeaSlugPattern.TRACKED_DATA_HANDLER);
     private static final TrackedData<SeaSlugColor> BASE_COLOR = DataTracker.registerData(SeaSlugEntity.class, SeaSlugColor.TRACKED_DATA_HANDLER);
@@ -55,7 +66,7 @@ public class SeaSlugEntity extends WaterCreatureEntity implements IAnimatable, B
     private static final TrackedData<Integer> LOVE_TICKS = DataTracker.registerData(SeaSlugEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Integer> LOVE_COOLDOWN = DataTracker.registerData(SeaSlugEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
-    AnimationFactory factory = new AnimationFactory(this);
+    AnimatableInstanceCache factory = new InstancedAnimatableInstanceCache(this);
 
     public SeaSlugEntity(EntityType<? extends WaterCreatureEntity> entityType, World world) {
         super(entityType, world);
@@ -244,22 +255,22 @@ public class SeaSlugEntity extends WaterCreatureEntity implements IAnimatable, B
     }
 
     @Override
-    public void registerControllers(AnimationData animationData) {
-        animationData.addAnimationController(new AnimationController<>(this, "ambient_controller", 0, this::ambientController));
-        animationData.addAnimationController(new AnimationController<>(this, "controller", 0, this::controller));
+    public void registerControllers(AnimatableManager.ControllerRegistrar animationData) {
+        animationData.add(new AnimationController<>(this, "ambient_controller", 0, this::ambientController));
+        animationData.add(new AnimationController<>(this, "controller", 0, this::controller));
     }
 
-    private PlayState ambientController(AnimationEvent<SeaSlugEntity> event) {
-        event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.sea_slug.ambient", true));
+    private PlayState ambientController(AnimationState<SeaSlugEntity> event) {
+        event.getController().setAnimation(AMBIENT);
         return PlayState.CONTINUE;
     }
 
-    private PlayState controller(AnimationEvent<SeaSlugEntity> event) {
+    private PlayState controller(AnimationState<SeaSlugEntity> event) {
         if(new Vec3d(getVelocity().getX(), 0, getVelocity().getZ()).length() > 0.005d) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.sea_slug.moving", true));
+            event.getController().setAnimation(MOVING);
             return PlayState.CONTINUE;
         }
-        event.getController().clearAnimationCache();
+        event.getController().forceAnimationReset();
         return PlayState.STOP;
     }
 
@@ -270,14 +281,14 @@ public class SeaSlugEntity extends WaterCreatureEntity implements IAnimatable, B
             createHeartParticles();
             if(!player.getAbilities().creativeMode)
                 stack.decrement(1);
-            return ActionResult.success(world.isClient);
+            return ActionResult.success(getWorld().isClient);
         }
         return Bucketable.tryBucket(player, hand, this).orElse(super.interactMob(player, hand));
     }
 
     public void createHeartParticles() {
-        if(!world.isClient) {
-            ((ServerWorld) world).spawnParticles(ParticleTypes.HEART, getParticleX(1), getRandomBodyY() + 0.5d, getParticleZ(1), 7, 0.25d, 0.25d, 0.25d, 0);
+        if(!getWorld().isClient) {
+            ((ServerWorld) getWorld()).spawnParticles(ParticleTypes.HEART, getParticleX(1), getRandomBodyY() + 0.5d, getParticleZ(1), 7, 0.25d, 0.25d, 0.25d, 0);
         }
     }
 
@@ -293,7 +304,7 @@ public class SeaSlugEntity extends WaterCreatureEntity implements IAnimatable, B
     }
 
     @Override
-    public AnimationFactory getFactory() {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return factory;
     }
 

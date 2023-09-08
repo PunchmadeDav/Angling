@@ -8,13 +8,13 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.util.math.Vector3d;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.math.Quaternion;
-import net.minecraft.util.math.Vec3f;
+import net.minecraft.util.math.RotationAxis;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib3.geo.render.built.GeoBone;
-import software.bernie.geckolib3.util.RenderUtils;
+import org.joml.Vector3d;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.util.RenderUtils;
 
 public class PelicanEntityRenderer extends BasicEntityRenderer<PelicanEntity> {
 
@@ -30,22 +30,21 @@ public class PelicanEntityRenderer extends BasicEntityRenderer<PelicanEntity> {
     }
 
     @Override
-    public void renderEarly(PelicanEntity entity, MatrixStack stackIn, float ticks, VertexConsumerProvider renderTypeBuffer, VertexConsumer vertexBuilder, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float tickDelta) {
-        this.vertexConsumerProvider = renderTypeBuffer;
-        this.pelicanEntity = entity;
-        super.renderEarly(entity, stackIn, ticks, renderTypeBuffer, vertexBuilder, packedLightIn, packedOverlayIn, red, green, blue, tickDelta);
+    public void preRender(MatrixStack poseStack, PelicanEntity animatable, BakedGeoModel model, VertexConsumerProvider bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        this.vertexConsumerProvider = bufferSource;
+        this.pelicanEntity = animatable;
+        super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }
 
     @Override
-    public void renderRecursively(GeoBone bone, MatrixStack stack, VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha) {
-
+    public void renderRecursively(MatrixStack stack, PelicanEntity animatable, GeoBone bone, RenderLayer renderType, VertexConsumerProvider bufferSource, VertexConsumer bufferIn, boolean isReRender, float partialTick, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         if(bone.getName().equals("beak_bottom") && pelicanEntity != null && pelicanEntity.isBeakOpen() && pelicanEntity.getEntityInBeak().isPresent()) {
             Entity entityInBeak = pelicanEntity.getEntityInBeak().get();
-            Vector3d pos = bone.getPosition();
+            Vector3d pos = bone.getPositionVector();
             stack.push();
             GeoBone parent = bone;
             while(parent != null) {
-                RenderUtils.translate(parent, stack);
+                RenderUtils.translateMatrixToBone(stack, bone);
                 if(parent.getName().equals("root")) {
                     if(pelicanEntity.isTouchingWater()) {
                         stack.translate(0, 0.5d, 0.25d);
@@ -53,25 +52,24 @@ public class PelicanEntityRenderer extends BasicEntityRenderer<PelicanEntity> {
                         stack.translate(0, 0.6d, 0.5d);
                     }
                 }
-                RenderUtils.moveToPivot(parent, stack);
-                RenderUtils.rotate(parent, stack);
+                RenderUtils.translateToPivotPoint(stack, parent);
+                RenderUtils.rotateMatrixAroundBone(stack, parent);
                 if(parent.getName().equals("head_joint")) {
-                    stack.multiply(Vec3f.POSITIVE_X.getDegreesQuaternion(pelicanEntity.getPitch()));
-                    stack.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(pelicanEntity.getHeadYaw() - pelicanEntity.getBodyYaw()));
+                    stack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(pelicanEntity.getPitch()));
+                    stack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(pelicanEntity.getHeadYaw() - pelicanEntity.getBodyYaw()));
                 }
-                RenderUtils.scale(parent, stack);
-                RenderUtils.moveBackFromPivot(parent, stack);
+                RenderUtils.scaleMatrixForBone(stack, parent);
+                RenderUtils.translateAwayFromPivotPoint(stack, parent);
                 parent = parent.getParent();
             }
             stack.translate(0, 0.75f, -1.35f);
             stack.scale(0.5f, 0.5f, 0.5f);
-            stack.multiply(Quaternion.fromEulerXyzDegrees(new Vec3f(0, 180, 0)));
-            entityRenderDispatcher.render(entityInBeak, pos.x, pos.y, pos.z, 0, 0, stack, vertexConsumerProvider, packedLightIn);
+            stack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180));
+            entityRenderDispatcher.render(entityInBeak, pos.x, pos.y, pos.z, 0, 0, stack, vertexConsumerProvider, packedLight);
             stack.pop();
-            bufferIn = vertexConsumerProvider.getBuffer(RenderLayer.getEntityTranslucent(getTextureResource(pelicanEntity)));
+            bufferIn = vertexConsumerProvider.getBuffer(RenderLayer.getEntityTranslucent(getTexture(pelicanEntity)));
         }
-
-        super.renderRecursively(bone, stack, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
+        super.renderRecursively(stack, animatable, bone, renderType, bufferSource, bufferIn, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }
 
 

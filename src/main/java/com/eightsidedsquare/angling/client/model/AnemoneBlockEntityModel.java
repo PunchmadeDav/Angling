@@ -2,11 +2,12 @@ package com.eightsidedsquare.angling.client.model;
 
 import com.eightsidedsquare.angling.common.entity.AnemoneBlockEntity;
 import net.minecraft.util.Identifier;
-import software.bernie.geckolib3.model.AnimatedGeoModel;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.model.GeoModel;
 
 import static com.eightsidedsquare.angling.core.AnglingMod.MOD_ID;
 
-public class AnemoneBlockEntityModel extends AnimatedGeoModel<AnemoneBlockEntity> {
+public class AnemoneBlockEntityModel extends GeoModel<AnemoneBlockEntity> {
     @Override
     public Identifier getModelResource(AnemoneBlockEntity object) {
         return new Identifier(MOD_ID, "geo/anemone.geo.json");
@@ -23,8 +24,7 @@ public class AnemoneBlockEntityModel extends AnimatedGeoModel<AnemoneBlockEntity
     }
 
     @Override
-    public void setLivingAnimations(AnemoneBlockEntity entity, Integer uniqueID) {
-
-        super.setLivingAnimations(entity, uniqueID);
+    public void setCustomAnimations(AnemoneBlockEntity animatable, long instanceId, AnimationState<AnemoneBlockEntity> animationState) {
+        super.setCustomAnimations(animatable, instanceId, animationState);
     }
 }

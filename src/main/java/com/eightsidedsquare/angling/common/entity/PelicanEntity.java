@@ -36,33 +36,29 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
-import net.minecraft.tag.TagKey;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Unit;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animatable.instance.InstancedAnimatableInstanceCache;
 
 import java.util.Optional;
 
-public class PelicanEntity extends AnimalEntity implements IAnimatable {
+public class PelicanEntity extends AnimalEntity implements GeoEntity {
 
-    AnimationFactory factory = new AnimationFactory(this);
+    AnimatableInstanceCache factory = new InstancedAnimatableInstanceCache(this);
     protected static final ImmutableList<SensorType<? extends Sensor<? super PelicanEntity>>> SENSORS;
     protected static final ImmutableList<MemoryModuleType<?>> MEMORY_MODULES;
 
@@ -82,7 +78,7 @@ public class PelicanEntity extends AnimalEntity implements IAnimatable {
         if(isBeakOpen() && stack.getItem() instanceof EntityBucketItem bucketItem) {
             bucketItem.playEmptyingSound(player, getWorld(), getBlockPos());
             NbtCompound nbt = stack.getOrCreateNbt().copy();
-            nbt.putString("id", Registry.ENTITY_TYPE.getId(bucketItem.entityType).toString());
+            nbt.putString("id", Registries.ENTITY_TYPE.getId(bucketItem.entityType).toString());
             if(nbt.contains("BucketVariantTag")) {
                 nbt.put("Variant", nbt.get("BucketVariantTag"));
                 nbt.remove("BucketVariantTag");
@@ -96,7 +92,7 @@ public class PelicanEntity extends AnimalEntity implements IAnimatable {
                 entity.setYaw(getHeadYaw());
                 if(entity instanceof Bucketable bucketable)
                     bucketable.setFromBucket(true);
-                world.spawnEntity(entity);
+                getWorld().spawnEntity(entity);
             });
             setEntityInBeak(nbt);
             setBeakOpen(true);
@@ -104,7 +100,7 @@ public class PelicanEntity extends AnimalEntity implements IAnimatable {
             getBrain().forget(AnglingMemoryModuleTypes.CAN_TRADE);
             if (player instanceof ServerPlayerEntity serverPlayerEntity)
                 AnglingCriteria.TRADED_WITH_PELICAN.trigger(serverPlayerEntity);
-            return ActionResult.success(world.isClient);
+            return ActionResult.success(getWorld().isClient);
         }
         return ActionResult.PASS;
     }
@@ -151,7 +147,7 @@ public class PelicanEntity extends AnimalEntity implements IAnimatable {
     }
 
     public Optional<Entity> getEntityInBeak() {
-        return AnglingUtil.entityFromNbt(getEntityInBeakNbt(), world);
+        return AnglingUtil.entityFromNbt(getEntityInBeakNbt(), getWorld());
     }
 
     @Override
@@ -214,19 +210,15 @@ public class PelicanEntity extends AnimalEntity implements IAnimatable {
         NbtCompound nbt = new NbtCompound();
         TagKey<EntityType<?>> tag = random.nextInt(5) == 0 ? AnglingEntityTypeTags.UNCOMMON_ENTITIES_IN_PELICAN_BEAK
                 : AnglingEntityTypeTags.COMMON_ENTITIES_IN_PELICAN_BEAK;
-        EntityType<?> type = AnglingUtil.getRandomTagValue(world, tag, random);
-        nbt.putString("id", Registry.ENTITY_TYPE.getId(type).toString());
+        EntityType<?> type = AnglingUtil.getRandomTagValue(getWorld(), tag, random);
+        nbt.putString("id", Registries.ENTITY_TYPE.getId(type).toString());
         nbt.putBoolean("FromBucket", true);
         if(type.isIn(AnglingEntityTypeTags.HUNTED_BY_PELICAN_WHEN_BABY)) {
             nbt.putInt("Age", -24000);
         }
-        return PelicanBeakEntityInitializer.getInitializer(type).initialize(nbt, random, world);
+        return PelicanBeakEntityInitializer.getInitializer(type).initialize(nbt, random, getWorld());
     }
 
-    @Override
-    protected boolean hasWings() {
-        return !onGround;
-    }
 
     @Override
     public boolean damage(DamageSource source, float amount) {
@@ -279,7 +271,7 @@ public class PelicanEntity extends AnimalEntity implements IAnimatable {
     @Override
     public void tickMovement() {
         super.tickMovement();
-        setTimeOffGround(onGround ? 0 : getTimeOffGround() + 1);
+        setTimeOffGround(isOnGround() ? 0 : getTimeOffGround() + 1);
     }
 
     @Override
@@ -305,7 +297,7 @@ public class PelicanEntity extends AnimalEntity implements IAnimatable {
             }
         }
 
-        this.updateLimbs(this, false);
+        this.updateLimbs(false);
     }
 
     @Nullable
@@ -355,7 +347,7 @@ public class PelicanEntity extends AnimalEntity implements IAnimatable {
     }
 
     @Override
-    public AnimationFactory getFactory() {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return factory;
     }
 
@@ -381,12 +373,12 @@ public class PelicanEntity extends AnimalEntity implements IAnimatable {
     }
 
     protected void mobTick() {
-        this.world.getProfiler().push("pelicanBrain");
-        this.getBrain().tick((ServerWorld)this.world, this);
-        this.world.getProfiler().pop();
-        this.world.getProfiler().push("pelicanActivityUpdate");
+        this.getWorld().getProfiler().push("pelicanBrain");
+        this.getBrain().tick((ServerWorld)this.getWorld(), this);
+        this.getWorld().getProfiler().pop();
+        this.getWorld().getProfiler().push("pelicanActivityUpdate");
         PelicanBrain.updateActivities(this);
-        this.world.getProfiler().pop();
+        this.getWorld().getProfiler().pop();
         super.mobTick();
     }
 

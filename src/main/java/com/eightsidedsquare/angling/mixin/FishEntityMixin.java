@@ -55,7 +55,7 @@ public abstract class FishEntityMixin extends WaterCreatureEntity {
             component.setLoveTicks(600);
             component.setWasFed(true);
             component.createHeartParticles();
-            cir.setReturnValue(ActionResult.success(world.isClient));
+            cir.setReturnValue(ActionResult.success(getWorld().isClient));
         }
     }
 

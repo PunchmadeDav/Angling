@@ -2,7 +2,7 @@ package com.eightsidedsquare.angling.core.world;
 
 import com.eightsidedsquare.angling.common.feature.*;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.registry.Registry;
 import net.minecraft.world.gen.feature.*;
 
 import static com.eightsidedsquare.angling.core.AnglingMod.MOD_ID;

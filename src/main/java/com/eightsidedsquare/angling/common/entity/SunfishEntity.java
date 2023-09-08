@@ -19,19 +19,22 @@ import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animatable.instance.InstancedAnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
 
 import java.util.Objects;
 
-public class SunfishEntity extends SchoolingFishEntity implements IAnimatable {
+public class SunfishEntity extends SchoolingFishEntity implements GeoEntity {
+    private static final RawAnimation FLOP = RawAnimation.begin().thenLoop("animation.sunfish.flop");
+    private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.sunfish.idle");
 
-    AnimationFactory factory = new AnimationFactory(this);
+    AnimatableInstanceCache factory = new InstancedAnimatableInstanceCache(this);
 
     private static final TrackedData<SunfishVariant> VARIANT;
 
@@ -42,7 +45,7 @@ public class SunfishEntity extends SchoolingFishEntity implements IAnimatable {
     @Override
     protected void initDataTracker() {
         super.initDataTracker();
-        dataTracker.startTracking(VARIANT, AnglingUtil.getRandomTagValue(world, SunfishVariant.Tag.NATURAL_SUNFISH, random));
+        dataTracker.startTracking(VARIANT, AnglingUtil.getRandomTagValue(getWorld(), SunfishVariant.Tag.NATURAL_SUNFISH, random));
     }
 
     @Override
@@ -117,21 +120,21 @@ public class SunfishEntity extends SchoolingFishEntity implements IAnimatable {
     }
 
     @Override
-    public void registerControllers(AnimationData animationData) {
-        animationData.addAnimationController(new AnimationController<>(this, "controller", 2, this::controller));
+    public void registerControllers(AnimatableManager.ControllerRegistrar registrar) {
+        registrar.add(new AnimationController<>(this, "controller", 2, this::controller));
     }
 
-    private PlayState controller(AnimationEvent<SunfishEntity> event) {
+    private PlayState controller(AnimationState<SunfishEntity> event) {
         if(!touchingWater) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.sunfish.flop", true));
-        }else {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.sunfish.idle", true));
+            event.getController().setAnimation(FLOP);
+        } else {
+            event.getController().setAnimation(IDLE);
         }
         return PlayState.CONTINUE;
     }
 
     @Override
-    public AnimationFactory getFactory() {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return factory;
     }
 }

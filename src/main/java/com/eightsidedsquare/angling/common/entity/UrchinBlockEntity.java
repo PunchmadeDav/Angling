@@ -1,5 +1,6 @@
 package com.eightsidedsquare.angling.common.entity;
 
+import com.eightsidedsquare.angling.common.block.StarfishBlock;
 import com.eightsidedsquare.angling.core.AnglingEntities;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -7,23 +8,26 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.network.Packet;
 import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animatable.instance.InstancedAnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
 
-public class UrchinBlockEntity extends BlockEntity implements IAnimatable {
+
+public class UrchinBlockEntity extends BlockEntity implements GeoBlockEntity {
+    private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.catfish.idle");
 
     private ItemStack hat = ItemStack.EMPTY;
-    AnimationFactory factory = new AnimationFactory(this);
+    AnimatableInstanceCache factory = new InstancedAnimatableInstanceCache(this);
 
     public UrchinBlockEntity(BlockPos pos, BlockState state) {
         super(AnglingEntities.URCHIN, pos, state);
@@ -65,17 +69,17 @@ public class UrchinBlockEntity extends BlockEntity implements IAnimatable {
     }
 
     @Override
-    public void registerControllers(AnimationData data) {
-        data.addAnimationController(new AnimationController<>(this, "controller", 0, this::controller));
+    public void registerControllers(AnimatableManager.ControllerRegistrar registrar) {
+        registrar.add(new AnimationController<>(this, "controller", 2, this::controller));
     }
 
-    private PlayState controller(AnimationEvent<UrchinBlockEntity> event) {
-        event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.urchin.idle", true));
+    private PlayState controller(AnimationState<UrchinBlockEntity> event) {
+        event.getController().setAnimation(IDLE);
         return PlayState.CONTINUE;
     }
 
     @Override
-    public AnimationFactory getFactory() {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return factory;
     }
 }

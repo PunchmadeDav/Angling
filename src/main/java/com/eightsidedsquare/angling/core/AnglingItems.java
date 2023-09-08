@@ -8,9 +8,10 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.*;
+import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.registry.Registry;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -58,7 +59,7 @@ public class AnglingItems {
 
     public static void init() {
 
-        ITEMS.keySet().forEach(item -> Registry.register(Registry.ITEM, ITEMS.get(item), item));
+        ITEMS.keySet().forEach(item -> Registry.register(Registries.ITEM, ITEMS.get(item), item));
         registerCompostable(DUCKWEED, 0.3f);
         registerCompostable(SARGASSUM, 0.3f);
         registerCompostable(WORM, 1f);

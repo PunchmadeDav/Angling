@@ -10,8 +10,8 @@ import net.minecraft.entity.ai.goal.MoveToTargetPosGoal;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.state.property.Properties;
-import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -25,7 +25,7 @@ public class SeaSlugLayEggsGoal extends MoveToTargetPosGoal {
     public SeaSlugLayEggsGoal(SeaSlugEntity entity) {
         super(entity, 1.25d, 6, 6);
         this.entity = entity;
-        this.world = entity.world;
+        this.world = entity.getWorld();
     }
 
     @Override

@@ -5,7 +5,7 @@ import com.eightsidedsquare.angling.common.world.PelicanSpawner;
 import com.eightsidedsquare.angling.core.world.AnglingPlacedFeatures;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import software.bernie.geckolib3.GeckoLib;
+import software.bernie.geckolib.GeckoLib;
 
 public class AnglingMod implements ModInitializer {
 	public static final String MOD_ID = "angling";

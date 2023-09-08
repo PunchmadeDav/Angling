@@ -38,7 +38,7 @@ public class NoisePatchFeature extends Feature<NoisePatchFeatureConfig> {
                 BlockPos blockPos = pos.add(x, 0, z);
                 if(value > threshold) {
 
-                    BlockState state = blockStateProvider.getBlockState(random, blockPos);
+                    BlockState state = blockStateProvider.get(random, blockPos);
                     if(state.canPlaceAt(world, blockPos))
                         world.setBlockState(blockPos, state, Block.NOTIFY_LISTENERS);
                 }

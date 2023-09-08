@@ -31,24 +31,28 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
-import net.minecraft.util.registry.RegistryEntry;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.biome.Biome;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animatable.instance.InstancedAnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
 
-public class CrabEntity extends AnimalEntity implements IAnimatable, Bucketable {
+public class CrabEntity extends AnimalEntity implements GeoEntity, Bucketable {
+    private static final RawAnimation MOVING = RawAnimation.begin().thenLoop("animation.crab.moving");
+    private static final RawAnimation ROTATED = RawAnimation.begin().thenLoop("animation.crab.rotated");
+    private static final RawAnimation FORWARDS = RawAnimation.begin().thenLoop("animation.crab.forwards");
 
-    AnimationFactory factory = new AnimationFactory(this);
+    AnimatableInstanceCache factory = new InstancedAnimatableInstanceCache(this);
 
     private static final TrackedData<CrabVariant> VARIANT = DataTracker.registerData(CrabEntity.class, CrabVariant.TRACKED_DATA_HANDLER);
     private static final TrackedData<Boolean> FROM_BUCKET = DataTracker.registerData(CrabEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -151,26 +155,26 @@ public class CrabEntity extends AnimalEntity implements IAnimatable, Bucketable 
     }
 
     @Override
-    public void registerControllers(AnimationData animationData) {
-        animationData.addAnimationController(new AnimationController<>(this, "rotation_controller", 6, this::rotationController));
-        animationData.addAnimationController(new AnimationController<>(this, "controller", 4, this::controller));
+    public void registerControllers(AnimatableManager.ControllerRegistrar registrar) {
+        registrar.add(new AnimationController<>(this, "rotation_controller", 6, this::rotationController));
+        registrar.add(new AnimationController<>(this, "controller", 4, this::controller));
     }
 
-    private PlayState rotationController(AnimationEvent<CrabEntity> event) {
+
+    private PlayState rotationController(AnimationState<CrabEntity> event) {
         if(event.isMoving()) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.crab.rotated", true));
+            event.getController().setAnimation(ROTATED);
             return PlayState.CONTINUE;
         }
-        event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.crab.forwards", true));
+        event.getController().setAnimation(FORWARDS);
         return PlayState.CONTINUE;
     }
-
-    private PlayState controller(AnimationEvent<CrabEntity> event) {
+    private PlayState controller(AnimationState<CrabEntity> event) {
         if(event.isMoving()) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.crab.moving", true));
+            event.getController().setAnimation(MOVING);
             return PlayState.CONTINUE;
         }
-        event.getController().clearAnimationCache();
+        event.getController().forceAnimationReset();
         return PlayState.STOP;
     }
 
@@ -184,7 +188,7 @@ public class CrabEntity extends AnimalEntity implements IAnimatable, Bucketable 
     }
 
     @Override
-    public AnimationFactory getFactory() {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return factory;
     }
 

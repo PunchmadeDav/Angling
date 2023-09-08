@@ -14,19 +14,22 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.BlockRenderView;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animatable.instance.InstancedAnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
 
 import java.awt.*;
 
-public class StarfishBlockEntity extends BlockEntity implements IAnimatable {
+public class StarfishBlockEntity extends BlockEntity implements GeoBlockEntity {
+    private static final RawAnimation DEAD = RawAnimation.begin().thenLoop("animation.sunfish.flop");
+    private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.sunfish.idle");
 
-    AnimationFactory factory = new AnimationFactory(this);
+    AnimatableInstanceCache factory = new InstancedAnimatableInstanceCache(this);
     private double randomRotation;
     private int color;
     private boolean rainbow;
@@ -43,15 +46,15 @@ public class StarfishBlockEntity extends BlockEntity implements IAnimatable {
     }
 
     @Override
-    public void registerControllers(AnimationData data) {
-        data.addAnimationController(new AnimationController<>(this, "controller", 0, this::controller));
+    public void registerControllers(AnimatableManager.ControllerRegistrar registrar) {
+        registrar.add(new AnimationController<>(this, "controller", 2, this::controller));
     }
 
-    private PlayState controller(AnimationEvent<StarfishBlockEntity> event) {
+    private PlayState controller(AnimationState<StarfishBlockEntity> event) {
         if(((StarfishBlock) getCachedState().getBlock()).isDead()) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.starfish.dead", true));
-        }else {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.starfish.idle", true));
+            event.getController().setAnimation(DEAD);
+        } else {
+            event.getController().setAnimation(IDLE);
         }
         return PlayState.CONTINUE;
     }
@@ -145,7 +148,7 @@ public class StarfishBlockEntity extends BlockEntity implements IAnimatable {
     }
 
     @Override
-    public AnimationFactory getFactory() {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return factory;
     }
 }

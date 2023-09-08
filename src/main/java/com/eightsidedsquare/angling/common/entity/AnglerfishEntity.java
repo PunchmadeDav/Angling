@@ -9,17 +9,20 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animatable.instance.InstancedAnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
 
-public class AnglerfishEntity extends FishEntity implements IAnimatable {
+public class AnglerfishEntity extends FishEntity implements GeoEntity {
+    private static final RawAnimation FLOP = RawAnimation.begin().thenLoop("animation.anglerfish.flop");
+    private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.anglerfish.idle");
 
-    AnimationFactory factory = new AnimationFactory(this);
+    AnimatableInstanceCache factory = new InstancedAnimatableInstanceCache(this);
 
     public AnglerfishEntity(EntityType<? extends FishEntity> entityType, World world) {
         super(entityType, world);
@@ -46,21 +49,23 @@ public class AnglerfishEntity extends FishEntity implements IAnimatable {
     public ItemStack getBucketItem() {
         return new ItemStack(AnglingItems.ANGLERFISH_BUCKET);
     }
+
+
     @Override
-    public AnimationFactory getFactory() {
+    public void registerControllers(AnimatableManager.ControllerRegistrar registrar) {
+        registrar.add(new AnimationController<>(this, "controller", 2, this::controller));
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return factory;
     }
 
-    @Override
-    public void registerControllers(AnimationData animationData) {
-        animationData.addAnimationController(new AnimationController<>(this, "controller", 2, this::controller));
-    }
-
-    private PlayState controller(AnimationEvent<AnglerfishEntity> event) {
+    private PlayState controller(AnimationState<AnglerfishEntity> event) {
         if(!touchingWater) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.anglerfish.flop", true));
+            event.getController().setAnimation(FLOP);
         }else {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.anglerfish.idle", true));
+            event.getController().setAnimation(IDLE);
         }
         return PlayState.CONTINUE;
     }

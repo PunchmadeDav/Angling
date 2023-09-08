@@ -12,6 +12,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.*;
 import net.minecraft.entity.ai.brain.task.*;
+import net.minecraft.entity.mob.HoglinBrain;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Unit;
 import net.minecraft.util.math.intprovider.UniformIntProvider;
@@ -35,18 +36,18 @@ public class PelicanBrain {
     private static void addCoreActivities(Brain<PelicanEntity> brain) {
         brain.setTaskList(Activity.CORE, 0, ImmutableList.of(
                 new StayAboveWaterTask(0.8F),
-                new WalkTask(2.5F),
+                StrollTask.create(2.5F),
                 new LookAroundTask(45, 90),
                 new WanderAroundTask(),
-                new UpdateAttackTargetTask<>(entity -> entity.getBrain().getOptionalMemory(MemoryModuleType.NEAREST_ATTACKABLE))
+                UpdateAttackTargetTask.create(entity -> entity.getBrain().getOptionalMemory(MemoryModuleType.NEAREST_ATTACKABLE))
         ));
     }
 
     private static void addIdleActivities(Brain<PelicanEntity> brain) {
         brain.setTaskList(Activity.IDLE, ImmutableList.of(
-                Pair.of(0, new UpdateAttackTargetTask<>(entity -> entity.getBrain().getOptionalMemory(MemoryModuleType.NEAREST_ATTACKABLE))),
+                Pair.of(0, UpdateAttackTargetTask.create(entity -> entity.getBrain().getOptionalMemory(MemoryModuleType.NEAREST_ATTACKABLE))),
                 Pair.of(1, new PelicanTradeTask()),
-                Pair.of(2, new TimeLimitedTask<>(new FollowMobTask(EntityType.PLAYER, 6.0F), UniformIntProvider.create(30, 60))),
+                Pair.of(2, TimeLimitedTask.create(FollowMobTask(EntityType.PLAYER, 6.0F), UniformIntProvider.create(30, 60))),
                 Pair.of(3, new RandomTask<>(ImmutableMap.of(MemoryModuleType.WALK_TARGET, MemoryModuleState.VALUE_ABSENT), ImmutableList.of(
                         Pair.of(new StrollTask(1f), 1),
                         Pair.of(new GoTowardsLookTarget(1f, 3), 1),
@@ -57,15 +58,15 @@ public class PelicanBrain {
 
     private static void addFightActivities(Brain<PelicanEntity> brain) {
         brain.setTaskList(Activity.FIGHT,0, ImmutableList.of(
-                new ForgetAttackTargetTask<>(),
-                new RangedApproachTask(entity -> 1f),
+                ForgetAttackTargetTask.create(),
+                RangedApproachTask.create(1f),
                 new PelicanAttackTask(5)
         ), MemoryModuleType.ATTACK_TARGET);
     }
 
     private static void addSoarActivities(Brain<PelicanEntity> brain) {
         brain.setTaskList(Activity.RIDE, ImmutableList.of(
-                Pair.of(0, new UpdateAttackTargetTask<>(entity -> entity.getBrain().getOptionalMemory(MemoryModuleType.NEAREST_ATTACKABLE))),
+                Pair.of(0, UpdateAttackTargetTask.create(entity -> entity.getBrain().getOptionalMemory(MemoryModuleType.NEAREST_ATTACKABLE))),
                 Pair.of(1, new PelicanEatTask()),
                 Pair.of(2, new PelicanSoarTask())
         ), ImmutableSet.of(

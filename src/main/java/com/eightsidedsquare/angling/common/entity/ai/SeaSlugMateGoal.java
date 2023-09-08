@@ -22,7 +22,7 @@ public class SeaSlugMateGoal extends Goal {
 
     public SeaSlugMateGoal(SeaSlugEntity entity) {
         this.entity = entity;
-        this.world = entity.world;
+        this.world = entity.getWorld();
         this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
     }
 

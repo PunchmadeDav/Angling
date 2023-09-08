@@ -33,7 +33,8 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
-import software.bernie.geckolib3.core.util.Color;
+
+import java.awt.*;
 
 import static com.eightsidedsquare.angling.core.AnglingMod.MOD_ID;
 
@@ -111,7 +112,7 @@ public class AnglingClient implements ClientModInitializer {
             int variant = nbt.getInt("BucketVariantTag");
             colorComponents = (i == 1 ? TropicalFishEntity.getPatternDyeColor(variant) : TropicalFishEntity.getBaseDyeColor(variant)).getColorComponents();
         }
-        return Color.ofRGB(colorComponents[0], colorComponents[1], colorComponents[2]).getColor();
+        return new Color(colorComponents[0], colorComponents[1], colorComponents[2]).getRGB();
     }
 
     private int getSeaSlugBucketColor(ItemStack stack, int i) {

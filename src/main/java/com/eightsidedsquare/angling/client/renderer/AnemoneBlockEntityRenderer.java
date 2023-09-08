@@ -8,7 +8,8 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
-import software.bernie.geckolib3.renderers.geo.GeoBlockRenderer;
+import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
 public class AnemoneBlockEntityRenderer extends GeoBlockRenderer<AnemoneBlockEntity> {
 
@@ -17,7 +18,7 @@ public class AnemoneBlockEntityRenderer extends GeoBlockRenderer<AnemoneBlockEnt
     }
 
     @Override
-    public RenderLayer getRenderType(AnemoneBlockEntity animatable, float partialTicks, MatrixStack stack, VertexConsumerProvider renderTypeBuffer, VertexConsumer vertexBuilder, int packedLightIn, Identifier textureLocation) {
-        return RenderLayer.getEntityTranslucent(getTextureResource(animatable));
+    public RenderLayer getRenderType(AnemoneBlockEntity animatable, Identifier texture, @Nullable VertexConsumerProvider bufferSource, float partialTick) {
+        return RenderLayer.getEntityTranslucent(getTextureLocation(animatable));
     }
 }
