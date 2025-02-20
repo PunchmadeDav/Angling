@@ -1,6 +1,7 @@
 package com.eightsidedsquare.angling.core.world;
 
 import com.eightsidedsquare.angling.common.feature.*;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.registry.Registry;
 import net.minecraft.world.gen.feature.*;
@@ -15,6 +16,6 @@ public class AnglingFeatures {
     public static final Feature<RandomPatchFeatureConfig> WATER_ADJACENT_PATCH = register("water_adjacent_patch", new WaterAdjacentPatchFeature(RandomPatchFeatureConfig.CODEC));
 
     private static <C extends FeatureConfig, F extends Feature<C>> F register(String name, F feature) {
-        return Registry.register(Registry.FEATURE, new Identifier(MOD_ID, name), feature);
+        return Registry.register(Registries.FEATURE, new Identifier(MOD_ID, name), feature);
     }
 }
