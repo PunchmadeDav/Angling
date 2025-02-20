@@ -23,6 +23,7 @@ import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
+import net.minecraft.world.WorldView;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -51,8 +52,9 @@ public class AlgaeBlock extends MultifaceGrowthBlock implements Waterloggable, F
         return !context.getStack().isOf(Items.GLOW_LICHEN) || super.canReplace(state, context);
     }
 
-    public boolean isFertilizable(BlockView world, BlockPos pos, BlockState state, boolean isClient) {
-        return canGrow(world, pos, state);
+    @Override
+    public boolean isFertilizable(WorldView world, BlockPos pos, BlockState state, boolean isClient) {
+        return false;
     }
 
     public boolean canGrow(BlockView world, BlockPos pos, BlockState state) {
@@ -64,7 +66,7 @@ public class AlgaeBlock extends MultifaceGrowthBlock implements Waterloggable, F
     }
 
     public void grow(ServerWorld world, Random random, BlockPos pos, BlockState state) {
-        while(canGrow(world, pos, state))
+        while (canGrow(world, pos, state))
             this.grower.grow(state, world, pos, random);
     }
 
@@ -72,7 +74,7 @@ public class AlgaeBlock extends MultifaceGrowthBlock implements Waterloggable, F
     @Override
     public BlockState getPlacementState(ItemPlacementContext ctx) {
         BlockState state = super.getPlacementState(ctx);
-        if(state != null) {
+        if (state != null) {
             return state.with(WATERLOGGED, ctx.getWorld().getFluidState(ctx.getBlockPos()).getFluid().equals(Fluids.WATER));
         }
         return null;
@@ -98,7 +100,7 @@ public class AlgaeBlock extends MultifaceGrowthBlock implements Waterloggable, F
 
     @Override
     public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        if(canGrow(world, pos, state)) {
+        if (canGrow(world, pos, state)) {
             world.getOtherEntities(null,
                     new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1).expand(5),
                     entity -> entity instanceof FishEntity fish && AnglingEntityComponents.FISH_SPAWNING.get(fish).wasFed()
@@ -107,7 +109,7 @@ public class AlgaeBlock extends MultifaceGrowthBlock implements Waterloggable, F
                 grow(world, random, pos, state);
             });
         }
-        if(state.get(WATERLOGGED)) {
+        if (state.get(WATERLOGGED)) {
             int attempts = random.nextBetween(10, 30);
             int range = 6;
             for (int i = 0; i < attempts; i++) {
@@ -128,7 +130,7 @@ public class AlgaeBlock extends MultifaceGrowthBlock implements Waterloggable, F
 
     public static void deteriorate(BlockPos pos, World world) {
         BlockState state = world.getBlockState(pos);
-        if(state.isOf(AnglingBlocks.ALGAE)) {
+        if (state.isOf(AnglingBlocks.ALGAE)) {
             List<Direction> faces = Util.copyShuffled(MultifaceGrowthBlock.collectDirections(state).stream(), world.random);
             if (!faces.isEmpty())
                 faces.remove(0);
@@ -147,11 +149,11 @@ public class AlgaeBlock extends MultifaceGrowthBlock implements Waterloggable, F
     @Override
     public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
         super.randomDisplayTick(state, world, pos, random);
-        if(state.get(WATERLOGGED) && random.nextBetween(0, 5) == 0) {
+        if (state.get(WATERLOGGED) && random.nextBetween(0, 5) == 0) {
             double x = random.nextGaussian() + pos.getX();
             double y = random.nextGaussian() + pos.getY();
             double z = random.nextGaussian() + pos.getZ();
-            if(world.getBlockState(new BlockPos(x, y, z)).getFluidState().isIn(FluidTags.WATER)) {
+            if (world.getBlockState(new BlockPos((int) x, (int) y, (int) z)).getFluidState().isIn(FluidTags.WATER)) {
                 double velocityX = random.nextGaussian() * 0.01d;
                 double velocityY = random.nextGaussian() * 0.01d;
                 double velocityZ = random.nextGaussian() * 0.01d;
