@@ -25,8 +25,9 @@ public class WanderAroundWaterGoal extends WanderAroundGoal {
     @Override
     protected Vec3d getWanderTarget() {
         Vec3d target = super.getWanderTarget();
-        if(target != null && entity.world.getFluidState(new BlockPos(target.x, target.y, target.z)).isIn(FluidTags.WATER))
+        if (target != null && entity.getWorld().getFluidState(new BlockPos((int) target.x, (int) target.y, (int) target.z)).isIn(FluidTags.WATER)) {
             return target;
+        }
         return null;
     }
 }
