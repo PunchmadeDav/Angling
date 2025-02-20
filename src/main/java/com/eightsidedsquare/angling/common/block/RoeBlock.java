@@ -96,7 +96,7 @@ public class RoeBlock extends BlockWithEntity implements Waterloggable {
     @Override
     public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
         if(state.get(WATERLOGGED)) {
-            world.createAndScheduleBlockTick(pos, this, getHatchTime(world.getRandom()));
+            world.scheduleBlockTick(pos, this, getHatchTime(world.getRandom()));
         }
     }
 
@@ -117,16 +117,42 @@ public class RoeBlock extends BlockWithEntity implements Waterloggable {
     public static Pair<Integer, Integer> getRoeColor(FishEntity entity) {
         SpawnEggItem eggItem = SpawnEggItem.forEntity(entity.getType());
         FishSpawningComponent component = AnglingEntityComponents.FISH_SPAWNING.get(entity);
-        if(entity instanceof TropicalFishEntity tropicalFishEntity) {
-            int parentColor = TropicalFishEntity.getBaseDyeColor(tropicalFishEntity.getVariant()).getSignColor();
-            return new Pair<>(parentColor,
-                    component.getMateData() != null ? TropicalFishEntity.getBaseDyeColor(component.getMateData().getInt("Variant")).getSignColor() : parentColor);
+
+        if (entity instanceof TropicalFishEntity tropicalFishEntity) {
+            int parentVariant = getVariantId(tropicalFishEntity.getVariant());
+            int parentColor = TropicalFishEntity.getBaseDyeColor(parentVariant).getSignColor();
+
+            int mateVariant = component.getMateData() != null ? component.getMateData().getInt("Variant") : parentVariant;
+            int mateColor = TropicalFishEntity.getBaseDyeColor(mateVariant).getSignColor();
+
+            return new Pair<>(parentColor, mateColor);
         }
-        if(eggItem != null) {
+
+        if (eggItem != null) {
             return new Pair<>(eggItem.getColor(0), eggItem.getColor(0));
         }
+
         return new Pair<>(0xffffff, 0xffffff);
     }
+
+    private static int getVariantId(TropicalFishEntity.Variety variety) {
+        return switch (variety) {
+            case KOB -> 0;
+            case SUNSTREAK -> 1;
+            case SNOOPER -> 2;
+            case DASHER -> 3;
+            case BRINELY -> 4;
+            case SPOTTY -> 5;
+            case FLOPPER -> 6;
+            case STRIPEY -> 7;
+            case GLITTER -> 8;
+            case BLOCKFISH -> 9;
+            case BETTY -> 10;
+            case CLAYFISH -> 11;
+        };
+    }
+
+
 
     static {
         WATERLOGGED = Properties.WATERLOGGED;
