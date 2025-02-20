@@ -53,10 +53,22 @@ import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animatable.instance.InstancedAnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.core.animation.AnimationState;
 
 import java.util.Optional;
 
 public class PelicanEntity extends AnimalEntity implements GeoEntity {
+    private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.pelican.idle");
+    private static final RawAnimation SWIMMING = RawAnimation.begin().thenLoop("animation.pelican.swimming");
+    private static final RawAnimation FLYING = RawAnimation.begin().thenLoop("animation.pelican.flying");
+    private static final RawAnimation FLAPPING = RawAnimation.begin().thenLoop("animation.pelican.flapping");
+    private static final RawAnimation DIVING_ANIMATION = RawAnimation.begin().thenLoop("animation.pelican.diving");
+    private static final RawAnimation WALKING = RawAnimation.begin().thenLoop("animation.pelican.walking");
+    private static final RawAnimation BEAK_OPEN_ANIMATION = RawAnimation.begin().thenLoop("animation.pelican.beak_open");
 
     AnimatableInstanceCache factory = new InstancedAnimatableInstanceCache(this);
     protected static final ImmutableList<SensorType<? extends Sensor<? super PelicanEntity>>> SENSORS;
@@ -307,42 +319,41 @@ public class PelicanEntity extends AnimalEntity implements GeoEntity {
     }
 
     @Override
-    public void registerControllers(AnimationData animationData) {
-        animationData.addAnimationController(new AnimationController<>(this, "controller", 4, this::controller));
-        animationData.addAnimationController(new AnimationController<>(this, "beak_controller", 2, this::beakController));
+    public void registerControllers(AnimatableManager.ControllerRegistrar registrar) {
+        registrar.add(new AnimationController<>(this, "controller", 4, this::controller));
+        registrar.add(new AnimationController<>(this, "beak_controller", 2, this::beakController));
     }
 
     public boolean isFlying() {
         return getTimeOffGround() > 5;
     }
 
-    private PlayState controller(AnimationEvent<PelicanEntity> event) {
-        PelicanEntity entity = event.getAnimatable();
-        if(entity.isDiving() && entity.isFlying()){
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.pelican.diving", true));
-        }else if(entity.isTouchingWater()) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.pelican.swimming", true));
-        }else if(entity.isFlying()) {
-            if (Math.abs(entity.getVelocity().y) > 0.05d) {
-                event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.pelican.flying", true));
+    private PlayState controller(AnimationState<PelicanEntity> event) {
+        if(isDiving() && isFlying()){
+            event.getController().setAnimation(DIVING_ANIMATION);
+        }else if(isTouchingWater()) {
+            event.getController().setAnimation(SWIMMING);
+        }else if(isFlying()) {
+            if (Math.abs(getVelocity().y) > 0.05d) {
+                event.getController().setAnimation(FLYING);
             } else {
-                event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.pelican.flapping", true));
+                event.getController().setAnimation(FLAPPING);
             }
         }else if(event.isMoving()) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.pelican.walking", true));
+            event.getController().setAnimation(WALKING);
         }else {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.pelican.idle", true));
+            event.getController().setAnimation(IDLE);
         }
         return PlayState.CONTINUE;
     }
 
-    private PlayState beakController(AnimationEvent<PelicanEntity> event) {
+    private PlayState beakController(AnimationState<PelicanEntity> event) {
         PelicanEntity entity = event.getAnimatable();
         if(entity.isBeakOpen()) {
-            event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.pelican.beak_opened", true));
+            event.getController().setAnimation(BEAK_OPEN_ANIMATION);
             return PlayState.CONTINUE;
         }
-        event.getController().clearAnimationCache();
+        event.getController().forceAnimationReset();
         return PlayState.STOP;
     }
 
