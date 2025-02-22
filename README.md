@@ -9,3 +9,5 @@ AnglingConfiguredFeatures.java
 AnglingPlacedFeatures.java
 
 but tbh idk how to do these so anybody who can feel free to.
+
+Port for The Lost Odyssey SMP
